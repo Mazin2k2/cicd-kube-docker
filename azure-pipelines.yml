@@ -3,33 +3,42 @@ trigger:
 
 variables:
   registry: 'maizmazin/vproappdock'
-  registryCredential: 'dockerhub'
   imageName: 'vprofile'
-  imageTag: '$(Build.BuildId)'  # This variable is still defined for reference
 
 stages:
 - stage: Build
   jobs:
-  - job: Build
+  - job: BuildProject
     pool:
       vmImage: 'ubuntu-latest'
     steps:
     - script: |
-        mvn -v  # Check Maven version
-      displayName: 'Check Maven Version'
-
-    - script: |
         mvn clean install -DskipTests  # Build the Maven project
       displayName: 'Build Project'
 
+  - job: CheckDocker
+    dependsOn: BuildProject  # This job depends on the previous job
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
     - script: |
         docker --version  # Check Docker version
       displayName: 'Check Docker Version'
 
+  - job: StartDocker
+    dependsOn: CheckDocker  # This job depends on the previous job
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
     - script: |
         sudo service docker start  # Start Docker daemon
       displayName: 'Start Docker Daemon'
 
+  - job: BuildDockerImage
+    dependsOn: StartDocker  # This job depends on the previous job
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
     - script: |
         docker build -t $(registry):$(Build.BuildId) .  # Build Docker image using build number
       displayName: 'Build Docker Image'
