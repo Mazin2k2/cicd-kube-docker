@@ -84,7 +84,7 @@ pipeline {
             steps {
                 script {
                     // Push the image to Docker Hub
-                    docker.withRegistry('', registryCredential) 
+                    docker.withRegistry('https://index.docker.io/v1/', registryCredential) 
                         dockerImage.push("V$BUILD_NUMBER")
                         dockerImage.push("latest")
                     }
