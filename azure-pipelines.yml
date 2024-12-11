@@ -1,0 +1,41 @@
+trigger:
+- main
+
+variables:
+  registry: 'maizmazin/vproappdock'
+  registryCredential: 'dockerhub'
+  imageName: 'vprofile'
+  imageTag: '$(Build.BuildId)'  # This variable is still defined for reference
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: |
+        mvn -v  # Check Maven version
+      displayName: 'Check Maven Version'
+
+    - script: |
+        mvn clean install -DskipTests  # Build the Maven project
+      displayName: 'Build Project'
+
+    - script: |
+        docker --version  # Check Docker version
+      displayName: 'Check Docker Version'
+
+    - script: |
+        sudo service docker start  # Start Docker daemon
+      displayName: 'Start Docker Daemon'
+
+    - script: |
+        docker build -t $(registry):$(Build.BuildId) .  # Build Docker image using build number
+      displayName: 'Build Docker Image'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(System.DefaultWorkingDirectory)/**/target/*.war'
+        ArtifactName: 'warFiles'
+        publishLocation: 'Container'
